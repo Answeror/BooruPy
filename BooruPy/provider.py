@@ -22,17 +22,18 @@ class BaseProvider:
         self.shortname = shortname
         self._filter_nsfw = filter_nsfw
 
-    def _get_URLopener(self):
-        return urllib.FancyURLopener({})  # TODO: add proxy support
+        import urllib3
+        self._http = urllib3.PoolManager()
+
+    def _fetch(self, request_url):
+        return self._http.request('GET', request_url).data
 
     def _get_json(self, request_url):
-        opener = self._get_URLopener()
-        raw_json = opener.open(request_url)
-        return json.load(raw_json)
+        raw_json = self._fetch(request_url)
+        return json.loads(raw_json)
 
     def _get_xml(self, request_url):
-        opener = self._get_URLopener()
-        raw_xml = opener.open(request_url).read()
+        raw_xml = self._fetch(request_url)
         return ElementTree.XML(raw_xml)
 
     def set_filter_nsfw(self, filter_nsfw=True):
