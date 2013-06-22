@@ -15,11 +15,12 @@ LIMIT_MIN = 128
 
 class BaseProvider:
 
-    def __init__(self, base_url, name, shortname, filter_nsfw):
+    def __init__(self, base_url, name, shortname, filter_nsfw, mapping):
         self._base_url = base_url
         self.name = name
         self.shortname = shortname
         self._filter_nsfw = filter_nsfw
+        self.mapping = mapping
 
         import urllib3
         self._http = urllib3.PoolManager()
@@ -65,7 +66,7 @@ class BaseProvider:
         return {
             'xml': Image.from_etree,
             'json': Image.from_dict
-        }[self.method](node)
+        }[self.method](node, self.mapping)
 
     def _request_images(self, tags):
         limit = LIMIT_MIN
@@ -122,8 +123,8 @@ class BaseProvider:
 
 class DanbooruProvider(BaseProvider):
 
-    def __init__(self, base_url, name, shortname, filter_nsfw):
-        BaseProvider.__init__(self, base_url, name, shortname, filter_nsfw)
+    def __init__(self, base_url, name, shortname, filter_nsfw, mapping):
+        BaseProvider.__init__(self, base_url, name, shortname, filter_nsfw, mapping)
         self._img_url = urljoin(
             self._base_url,
             "/post/index.json?tags=%s&limit=%s&page=%s"
@@ -148,8 +149,8 @@ class DanbooruProvider(BaseProvider):
 
 class GelbooruProvider(BaseProvider):
 
-    def __init__(self, base_url, name, shortname, filter_nsfw):
-        BaseProvider.__init__(self, base_url, name, shortname, filter_nsfw)
+    def __init__(self, base_url, name, shortname, filter_nsfw, mapping):
+        BaseProvider.__init__(self, base_url, name, shortname, filter_nsfw, mapping)
         self._img_url = urljoin(
             self._base_url,
             "/index.php?page=dapi&s=post&q=index&tags=%s&limit=%s&pid=%s"

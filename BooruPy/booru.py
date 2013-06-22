@@ -15,10 +15,10 @@ class BooruManager:
         for p in providers["providers"]:
             if p["type"] == "danbooru":
                 self.provider_list.append(DanbooruProvider(p['url'], p['name'],
-                    p['key'], filter_nsfw))
+                    p['key'], filter_nsfw, p['mapping']))
             elif p["type"] == "gelbooru":
                 self.provider_list.append(GelbooruProvider(p['url'], p['name'],
-                    p['key'], filter_nsfw))
+                    p['key'], filter_nsfw, p['mapping']))
             else:
                 print("Unknown provider type: {0}".format(p["type"]))
 
