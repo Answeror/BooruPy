@@ -8,6 +8,10 @@ import urllib
 from urlparse import urljoin
 from image import Image
 from xml.etree import ElementTree
+import logging
+
+
+LIMIT_MIN = 128
 
 
 class BaseProvider:
@@ -64,24 +68,28 @@ class BaseProvider:
         }[self.method](node)
 
     def _request_images(self, tags):
-        limit = 100
+        limit = LIMIT_MIN
         page = self.start_page
         end = False
+        fetched = 0
         while not end:
+            logging.debug('limit %d' % limit)
             page_link = self._img_url % ('+'.join(tags), limit, page)
-            images = self._get(page_link)
+            images = list(self._get(page_link))
             if len(images) < limit:
                 end = True
-            yield images
-            page += 1
+            for im in images[fetched:]:
+                yield im
+            fetched = len(images)
+            # doubling next fetch
+            limit += limit
 
     def get_images(self, tags):
         if self._filter_nsfw:
             tags.append(self.nsfw_tag)
 
-        for images in self._request_images(tags):
-            for i in images:
-                yield self._make_image(i)
+        for im in self._request_images(tags):
+            yield self._make_image(im)
 
     def get_tags(self):
         for tags in self._request_tag():
