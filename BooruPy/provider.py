@@ -4,7 +4,6 @@
 # You should have received a copy of the GNU General Public License
 # along with BooruPy. If not, see <http://www.gnu.org/licenses/>
 import json
-import urllib
 from urlparse import urljoin
 from image import Image
 from xml.etree import ElementTree
@@ -85,11 +84,22 @@ class BaseProvider:
             # doubling next fetch
             limit += limit
 
-    def get_images(self, tags):
+    def _request_paged_images(self, tags, page, per):
+        page = self.start_page + page
+        page_link = self._img_url % ('+'.join(tags), per, page)
+        for im in self._get(page_link):
+            yield im
+
+    def get_images(self, tags, page=None, per=None):
         if self._filter_nsfw:
             tags.append(self.nsfw_tag)
 
-        for im in self._request_images(tags):
+        if page is None or per is None:
+            images = self._request_images(tags)
+        else:
+            images = self._request_paged_images(tags, page, per)
+
+        for im in images:
             yield self._make_image(im)
 
     def get_tags(self):
