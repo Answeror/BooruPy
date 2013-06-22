@@ -11,6 +11,13 @@ from xml.etree import ElementTree
 
 
 class BaseProvider:
+
+    def __init__(self, base_url, name, shortname, filter_nsfw):
+        self._base_url = base_url
+        self.name = name
+        self.shortname = shortname
+        self._filter_nsfw = filter_nsfw
+
     def _get_URLopener(self):
         return urllib.FancyURLopener({})  # TODO: add proxy support
 
@@ -27,42 +34,42 @@ class BaseProvider:
     def set_filter_nsfw(self, filter_nsfw=True):
         self._filter_nsfw = filter_nsfw
 
+    @property
+    def start_page(self):
+        assert False
 
-class DanbooruProvider(BaseProvider):
-    def __init__(self, base_url, name, shortname, filter_nsfw):
-        self._base_url = base_url
-        self.name = name
-        self.shortname = shortname
-        self._filter_nsfw = filter_nsfw
-        self._img_url = urljoin(self._base_url,
-            "/post/index.json?tags=%s&limit=%s&page=%s")
-        self._tag_url = urljoin(self._base_url,
-                "/tags/index.json?limit=%s&page=%s")
+    @property
+    def method(self):
+        assert False
 
-    def _request_tag(self):
-        limit = 100
-        page = 1
-        end = False
-        while not end:
-            page_link = self._tag_url % (limit, page)
-            tags = self._get_json(page_link)
-            if len(tags) < limit:
-                end = True
-            yield tags
-            page += 1
+    @property
+    def nsfw_tag(self):
+        assert False
 
-    def get_tags(self):
-        for tags in self._request_tag():
-            for tag in tags:
-                yield tag.count, tag.name
+    def _check_method(self):
+        assert self.method in ('xml', 'json'), self.method
+
+    def _get(self, request_url):
+        self._check_method()
+        return {
+            'xml': self._get_xml,
+            'json': self._get_json
+        }[self.method](request_url)
+
+    def _make_image(self, node):
+        self._check_method()
+        return {
+            'xml': Image.from_etree,
+            'json': Image.from_dict
+        }[self.method](node)
 
     def _request_images(self, tags):
         limit = 100
-        page = 1
+        page = self.start_page
         end = False
         while not end:
             page_link = self._img_url % ('+'.join(tags), limit, page)
-            images = self._get_json(page_link)
+            images = self._get(page_link)
             if len(images) < limit:
                 end = True
             yield images
@@ -70,57 +77,77 @@ class DanbooruProvider(BaseProvider):
 
     def get_images(self, tags):
         if self._filter_nsfw:
-            tags.append("rating:s")
+            tags.append(self.nsfw_tag)
 
         for images in self._request_images(tags):
             for i in images:
-                yield Image.from_dict(i)
+                yield self._make_image(i)
+
+    def get_tags(self):
+        for tags in self._request_tag():
+            for tag in tags:
+                yield tag.count, tag.name
+
+    def _request_tag(self):
+        limit = 100
+        page = self.start_page
+        end = False
+        while not end:
+            page_link = self._tag_url % (limit, page)
+            tags = self._get(page_link)
+            if len(tags) < limit:
+                end = True
+            yield tags
+            page += 1
+
+
+class DanbooruProvider(BaseProvider):
+
+    def __init__(self, base_url, name, shortname, filter_nsfw):
+        BaseProvider.__init__(self, base_url, name, shortname, filter_nsfw)
+        self._img_url = urljoin(
+            self._base_url,
+            "/post/index.json?tags=%s&limit=%s&page=%s"
+        )
+        self._tag_url = urljoin(
+            self._base_url,
+            "/tags/index.json?limit=%s&page=%s"
+        )
+
+    @property
+    def start_page(self):
+        return 1
+
+    @property
+    def method(self):
+        return 'json'
+
+    @property
+    def nsfw_tag(self):
+        return "rating:s"
 
 
 class GelbooruProvider(BaseProvider):
+
     def __init__(self, base_url, name, shortname, filter_nsfw):
-        self._base_url = base_url
-        self._img_url = urljoin(self._base_url,
-            "/index.php?page=dapi&s=post&q=index&tags=%s&limit=%s&pid=%s")
-        self.name = name
-        self.shortname = shortname
-        self._filter_nsfw = filter_nsfw
-        self._tag_url = urljoin(self._base_url,
-                "/index.php?page=dapi&s=tag&q=index&limit=%s&pid=%s")
+        BaseProvider.__init__(self, base_url, name, shortname, filter_nsfw)
+        self._img_url = urljoin(
+            self._base_url,
+            "/index.php?page=dapi&s=post&q=index&tags=%s&limit=%s&pid=%s"
+        )
+        self._tag_url = urljoin(
+            self._base_url,
+            "/index.php?page=dapi&s=tag&q=index&limit=%s&pid=%s"
+        )
 
-    def _request_tag(self):
-        limit = 100
-        page = 0
-        end = False
-        while not end:
-            page_link = self._tag_url % (limit, page)
-            tags = self._get_xml(page_link)
-            if len(tags) < limit:
-                end = True
-            yield tags
-            page += 1
+    @property
+    def start_page(self):
+        return 0
 
-    def get_tags(self):
-        for tags in self._request_tag():
-            for tag in tags:
-                yield tag.count, tag.name
+    @property
+    def method(self):
+        return 'xml'
 
-    def _request_images(self, tags):
-        limit = 100
-        page = 0
-        end = False
-        while not end:
-            page_link = self._img_url % ('+'.join(tags), limit, page)
-            images = self._get_xml(page_link)
-            if len(images) < limit:
-                end = True
-            yield images
-            page += 1
-
-    def get_images(self, tags):
-        if self._filter_nsfw:
-            tags.append("rating:safe")
-
-        for images in self._request_images(tags):
-            for i in images:
-                yield Image.from_etree(i)
+    @property
+    def nsfw_tag(self):
+        return "rating:safe"
