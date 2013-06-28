@@ -13,11 +13,6 @@ FIELDS = (
     'score',
     'md5',
     'preview_url',
-    'preview_width',
-    'preview_height',
-    'sample_url',
-    'sample_width',
-    'sample_height',
     'tags'
 )
 
@@ -28,7 +23,7 @@ class Image:
         pass
 
     @classmethod
-    def from_dict(cls, image, mapping):
+    def from_dict(cls, image, root, mapping):
         inst = cls()
         if type(mapping) is dict:
             mapping = mapping.items()
@@ -38,8 +33,10 @@ class Image:
             setattr(inst, lhs, image[rhs])
         for field in FIELDS:
             assert hasattr(inst, field), field
+        from urlparse import urljoin
+        inst.preview_url = urljoin(root, inst.preview_url)
         return inst
 
     @classmethod
-    def from_etree(cls, image, mapping):
+    def from_etree(cls, image, root, mapping):
         return cls.from_dict(dict(image.attrib.iteritems()), mapping)
