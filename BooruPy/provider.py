@@ -28,9 +28,8 @@ class BaseProvider:
     def _fetch(self, request_url):
         return self._http.request('GET', request_url).data
         #import urllib2
-        #headers = { 'Content-Type' : 'application/json' }
-        #data = None
-        #req  = urllib2.Request(request_url, data, headers)
+        #req = urllib2.Request(request_url)
+        #logging.debug(req.headers)
         #return urllib2.urlopen(req).read()
         #from google.appengine.api import urlfetch
         #headers = {
@@ -41,8 +40,9 @@ class BaseProvider:
             #'Accept-Encoding': 'gzip,deflate,sdch',
             #'Accept-Language': 'en-US,en;q=0.8,zh-CN;q=0.6,zh-TW;q=0.4'
         #}
-        #result = urlfetch.fetch(request_url, method=urlfetch.GET, headers=headers)
+        #result = urlfetch.fetch(request_url, method=urlfetch.POST, headers=headers)
         #logging.debug('fetch json status code: %d' % result.status_code)
+        #logging.debug(result.content.encode('utf-8'))
         #return result.content
 
     def _get_json(self, request_url):
