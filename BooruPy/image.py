@@ -5,6 +5,10 @@
 # along with pyDanbooru. If not, see <http://www.gnu.org/licenses/>
 
 
+from functools import partial
+from operator import getitem
+
+
 FIELDS = (
     'url',
     'width',
@@ -24,15 +28,31 @@ class Image:
 
     @classmethod
     def from_dict(cls, image, root, mapping):
-        inst = cls()
         if type(mapping) is dict:
-            mapping = mapping.items()
-        mapping = {rhs: lhs for lhs, rhs in mapping}
-        for rhs, value in image.items():
-            lhs = mapping.get(rhs, rhs)
-            setattr(inst, lhs, image[rhs])
+            def map_fn(source):
+                d = {}
+                for key, value in image.items():
+                    d[key] = value
+                for lhs, rhs in mapping.items():
+                    if type(rhs) is tuple:
+                        rhs, fn = rhs
+                    elif hasattr(rhs, '__call__'):
+                        fn = rhs
+                        rhs = lhs
+                    else:
+                        fn = lambda x: x
+                    d[lhs] = fn(image[rhs])
+                return d
+        else:
+            map_fn = mapping
+
+        inst = cls()
+        for key, value in map_fn(image).items():
+            setattr(inst, key, value)
+
         for field in FIELDS:
             assert hasattr(inst, field), field
+
         from urlparse import urljoin
         inst.preview_url = urljoin(root, inst.preview_url)
         return inst
