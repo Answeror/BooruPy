@@ -22,6 +22,10 @@ class BooruManager:
             else:
                 print("Unknown provider type: {0}".format(p["type"]))
 
+    @property
+    def providers(self):
+        return self.provider_list
+
     def set_filter_nsfw(self, filter_nsfw=True):
         for provider in self.provider_list:
             provider.set_filter_nsfw(filter_nsfw)
