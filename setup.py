@@ -21,5 +21,6 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Topic :: Software Development :: Libraries'
-    ]
+    ],
+    use_2to3=True
 )

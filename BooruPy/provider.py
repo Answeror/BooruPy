@@ -5,7 +5,7 @@
 # along with BooruPy. If not, see <http://www.gnu.org/licenses/>
 import json
 from urlparse import urljoin
-from image import Image
+from .image import Image
 from xml.etree import ElementTree
 import logging
 
@@ -27,28 +27,11 @@ class BaseProvider:
 
     def _fetch(self, request_url):
         return self._http.request('GET', request_url).data
-        #import urllib2
-        #req = urllib2.Request(request_url)
-        #logging.debug(req.headers)
-        #return urllib2.urlopen(req).read()
-        #from google.appengine.api import urlfetch
-        #headers = {
-            #'Host': 'yande.re',
-            #'Connection': 'keep-alive',
-            #'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            #'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36',
-            #'Accept-Encoding': 'gzip,deflate,sdch',
-            #'Accept-Language': 'en-US,en;q=0.8,zh-CN;q=0.6,zh-TW;q=0.4'
-        #}
-        #result = urlfetch.fetch(request_url, method=urlfetch.POST, headers=headers)
-        #logging.debug('fetch json status code: %d' % result.status_code)
-        #logging.debug(result.content.encode('utf-8'))
-        #return result.content
 
     def _get_json(self, request_url):
         raw_json = self._fetch(request_url)
         logging.debug('json length: %d' % len(raw_json))
-        return json.loads(raw_json)
+        return json.loads(raw_json.decode('utf-8'))
 
     def _get_xml(self, request_url):
         raw_xml = self._fetch(request_url)
