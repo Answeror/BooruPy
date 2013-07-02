@@ -54,7 +54,9 @@ class Image:
             assert hasattr(inst, field), field
 
         from urlparse import urljoin
-        inst.preview_url = urljoin(root, inst.preview_url)
+        for key, value in inst.__dict__.items():
+            if key.endswith('url'):
+                setattr(inst, key, urljoin(root, value))
         return inst
 
     @classmethod
