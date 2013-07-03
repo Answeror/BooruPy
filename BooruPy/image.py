@@ -7,6 +7,7 @@
 
 from functools import partial
 from operator import getitem
+import logging
 
 
 FIELDS = (
@@ -56,6 +57,7 @@ class Image:
         from urlparse import urljoin
         for key, value in inst.__dict__.items():
             if key.endswith('url'):
+                logging.debug('%s: %s + %s = %s' % (key, root, value, urljoin(root, value)))
                 setattr(inst, key, urljoin(root, value))
         return inst
 
