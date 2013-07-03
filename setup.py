@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='BooruPy',
-    version='0.1.9',
+    version='0.1.10',
     keywords = ['pictures', 'anime', 'booru', 'gelbooru', 'danbooru', 'image',
      'board', 'imageboard'],
     author='Christopher Kaster',
